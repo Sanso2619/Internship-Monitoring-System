@@ -30,99 +30,98 @@ public class ApplicationDAO {
     }
 
     //  2. APPLY INTERNSHIP (USING PROCEDURE)
-    public void applyInternship(int studentId, int internshipId) {
+    public String applyInternshipString(int studentId, int internshipId) {
     try {
         Connection conn = DBConnection.getConnection();
 
-        // Check if already applied
-        String check = "SELECT COUNT(*) FROM applications WHERE student_id=? AND internship_id=?";
-        PreparedStatement checkPs = conn.prepareStatement(check);
-        checkPs.setInt(1, studentId);
-        checkPs.setInt(2, internshipId);
-        ResultSet rs = checkPs.executeQuery();
-        rs.next();
-        if (rs.getInt(1) > 0) {
-            System.out.println("\nAlready applied for this internship!");
-            return;
-        }
-
-        // Apply via procedure
         String query = "{CALL apply_internship(?, ?)}";
         CallableStatement cs = conn.prepareCall(query);
+
         cs.setInt(1, studentId);
         cs.setInt(2, internshipId);
-        cs.execute();
 
-        System.out.println("\nApplied via procedure!");
+        boolean hasResult = cs.execute();
+
+        if (hasResult) {
+            ResultSet rs = cs.getResultSet();
+            if (rs.next()) return rs.getString(1);
+        }
+
+        return "Applied successfully!";
 
     } catch (Exception e) {
         e.printStackTrace();
     }
+
+    return "Error applying!";
 }
 
     //  3. ADVANCED RECOMMENDATION (WINDOW FUNCTION)
-    public void recommendInternships(int studentId) {
-        try {
-            Connection conn = DBConnection.getConnection();
+    public String getRecommendationsString(int studentId) {
+    StringBuilder sb = new StringBuilder("Recommendations:\n\n");
 
-            String query =
-                    "SELECT i.title, COUNT(*) AS match_score, " +
-                    "RANK() OVER (ORDER BY COUNT(*) DESC) AS rank_no " +
-                    "FROM internships i " +
-                    "JOIN internship_skills ik ON i.internship_id = ik.internship_id " +
-                    "JOIN student_skills ss ON ik.skill_id = ss.skill_id " +
-                    "WHERE ss.student_id = ? " +
-                    "GROUP BY i.internship_id";
+    try {
+        Connection conn = DBConnection.getConnection();
 
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setInt(1, studentId);
+        String query =
+            "SELECT i.title, COUNT(*) AS match_score " +
+            "FROM internships i " +
+            "JOIN internship_skills ik ON i.internship_id = ik.internship_id " +
+            "JOIN student_skills ss ON ik.skill_id = ss.skill_id " +
+            "WHERE ss.student_id = ? " +
+            "GROUP BY i.internship_id";
 
-            ResultSet rs = ps.executeQuery();
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, studentId);
 
-            System.out.println("\nRecommended Internships:");
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                System.out.println(
-                        rs.getString("title") +
-                        " | Score: " + rs.getInt("match_score") +
-                        " | Rank: " + rs.getInt("rank_no")
-                );
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            sb.append(rs.getString("title"))
+              .append(" | Score: ")
+              .append(rs.getInt("match_score"))
+              .append("\n");
         }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    return sb.toString();
+}
 
     //  4. VIEW APPLICATIONS (JOIN QUERY)
-    public void viewApplications() {
-        try {
-            Connection conn = DBConnection.getConnection();
+    public String getApplicationsString() {
+    StringBuilder sb = new StringBuilder("Applications:\n\n");
 
-            String query =
-                    "SELECT u.name, i.title, a.status " +
-                    "FROM applications a " +
-                    "JOIN students s ON a.student_id = s.student_id " +
-                    "JOIN users u ON s.student_id = u.user_id " +
-                    "JOIN internships i ON a.internship_id = i.internship_id";
+    try {
+        Connection conn = DBConnection.getConnection();
 
-            PreparedStatement ps = conn.prepareStatement(query);
-            ResultSet rs = ps.executeQuery();
+        String query =
+            "SELECT u.name, i.title, a.status " +
+            "FROM applications a " +
+            "JOIN students s ON a.student_id = s.student_id " +
+            "JOIN users u ON s.student_id = u.user_id " +
+            "JOIN internships i ON a.internship_id = i.internship_id";
 
-            System.out.println("\nApplications:");
+        PreparedStatement ps = conn.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                System.out.println(
-                        rs.getString("name") + " | " +
-                        rs.getString("title") + " | " +
-                        rs.getString("status")
-                );
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            sb.append(rs.getString("name"))
+              .append(" | ")
+              .append(rs.getString("title"))
+              .append(" | ")
+              .append(rs.getString("status"))
+              .append("\n");
         }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    return sb.toString();
+}
 
     //  5. VIEW STATUS HISTORY
     public void viewStatusHistory() {

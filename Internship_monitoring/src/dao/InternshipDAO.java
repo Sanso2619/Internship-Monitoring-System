@@ -6,32 +6,35 @@ import java.sql.*;
 public class InternshipDAO {
 
     //  View all internships
-    public void getAllInternships() {
-        try {
-            Connection conn = DBConnection.getConnection();
+    public String getAllInternshipsString() {
+    StringBuilder sb = new StringBuilder("Internships:\n\n");
 
-            String query =
-                "SELECT i.title, c.company_name, i.stipend " +
-                "FROM internships i " +
-                "JOIN companies c ON i.company_id = c.company_id";
+    try {
+        Connection conn = DBConnection.getConnection();
 
-            PreparedStatement ps = conn.prepareStatement(query);
-            ResultSet rs = ps.executeQuery();
+        String query =
+            "SELECT i.title, c.company_name, i.stipend " +
+            "FROM internships i " +
+            "JOIN companies c ON i.company_id = c.company_id";
 
-            System.out.println("\nInternships:");
+        PreparedStatement ps = conn.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                System.out.println(
-                    rs.getString("title") + " | " +
-                    rs.getString("company_name") + " | ₹" +
-                    rs.getInt("stipend")
-                );
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            sb.append(rs.getString("title"))
+              .append(" | ")
+              .append(rs.getString("company_name"))
+              .append(" | ₹")
+              .append(rs.getInt("stipend"))
+              .append("\n");
         }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    return sb.toString();
+}
 
     //  View internship details with skills
     public void getInternshipDetails(int internshipId) {
@@ -63,4 +66,44 @@ public class InternshipDAO {
             e.printStackTrace();
         }
     }
+    public String[][] getInternshipsTableData() {
+
+    try {
+        Connection conn = DBConnection.getConnection();
+
+        String query =
+            "SELECT i.title, c.company_name, i.stipend " +
+            "FROM internships i JOIN companies c ON i.company_id = c.company_id";
+
+        PreparedStatement ps = conn.prepareStatement(
+            query,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
+
+        ResultSet rs = ps.executeQuery();
+
+    
+        rs.last();
+        int size = rs.getRow();
+        rs.beforeFirst();
+
+        String[][] data = new String[size][3];
+
+        int i = 0;
+        while (rs.next()) {
+            data[i][0] = rs.getString("title");
+            data[i][1] = rs.getString("company_name");
+            data[i][2] = "₹" + rs.getInt("stipend");
+            i++;
+        }
+
+        return data;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return new String[0][0];
+}
 }

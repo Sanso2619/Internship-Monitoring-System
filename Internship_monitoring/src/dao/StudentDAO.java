@@ -6,62 +6,64 @@ import java.sql.*;
 public class StudentDAO {
 
     //  Get student profile
-    public void getStudentProfile(int studentId) {
-        try {
-            Connection conn = DBConnection.getConnection();
+   public String getStudentProfile(int studentId) {
+    StringBuilder sb = new StringBuilder();
 
-            String query =
-                "SELECT u.name, s.cgpa, s.college, s.graduation_year " +
-                "FROM students s JOIN users u ON s.student_id = u.user_id " +
-                "WHERE s.student_id = ?";
+    try {
+        Connection conn = DBConnection.getConnection();
 
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setInt(1, studentId);
+        String query =
+            "SELECT u.name, s.cgpa, s.college " +
+            "FROM students s JOIN users u ON s.student_id = u.user_id " +
+            "WHERE s.student_id = ?";
 
-            ResultSet rs = ps.executeQuery();
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, studentId);
 
-            System.out.println("\nStudent Profile:");
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                System.out.println(
-                    rs.getString("name") + " | " +
-                    rs.getDouble("cgpa") + " | " +
-                    rs.getString("college")
-                );
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            sb.append("Name: ").append(rs.getString("name")).append("\n");
+            sb.append("CGPA: ").append(rs.getDouble("cgpa")).append("\n");
+            sb.append("College: ").append(rs.getString("college")).append("\n");
         }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    return sb.toString();
+}
 
     //  View student skills
-    public void getStudentSkills(int studentId) {
-        try {
-            Connection conn = DBConnection.getConnection();
+    public String getStudentSkillsString(int studentId) {
+    StringBuilder sb = new StringBuilder("Skills:\n\n");
 
-            String query =
-                "SELECT sk.skill_name, ss.level " +
-                "FROM student_skills ss " +
-                "JOIN skills sk ON ss.skill_id = sk.skill_id " +
-                "WHERE ss.student_id = ?";
+    try {
+        Connection conn = DBConnection.getConnection();
 
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setInt(1, studentId);
+        String query =
+            "SELECT sk.skill_name, ss.level " +
+            "FROM student_skills ss " +
+            "JOIN skills sk ON ss.skill_id = sk.skill_id " +
+            "WHERE ss.student_id = ?";
 
-            ResultSet rs = ps.executeQuery();
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, studentId);
 
-            System.out.println("\nStudent Skills:");
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                System.out.println(
-                    rs.getString("skill_name") +
-                    " | Level: " + rs.getInt("level")
-                );
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            sb.append(rs.getString("skill_name"))
+              .append(" (Level ")
+              .append(rs.getInt("level"))
+              .append(")\n");
         }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    return sb.toString();
+}
 }
