@@ -1,7 +1,14 @@
 {
-  "java.project.sourcePaths": ["src"],
+  "java.project.sourcePaths": [
+    "Internship_monitoring/src"
+  ],
   "java.project.outputPath": "bin",
-  "java.project.referencedLibraries": [
-    "lib/**/*.jar"
-  ]
+  "java.project.referencedLibraries": {
+    "include": [
+      "Internship_monitoring/lib/mysql-connector-j-9.6.0.jar"
+    ],
+    "exclude": [
+      "/Users/sanchitaarora/Desktop/mysql-connector-j-9.6.0.jar"
+    ]
+  }
 }
