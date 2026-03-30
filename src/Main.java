@@ -1,20 +1,11 @@
-import db.DBConnection;
-import java.sql.Connection;
+import ui.Login;
 
 public class Main {
     public static void main(String[] args) {
 
-        try {
-            Connection conn = DBConnection.getConnection();
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new Login();
+        });
 
-            if (conn != null) {
-                System.out.println("✅ Connected to database successfully!");
-            } else {
-                System.out.println("❌ Connection failed!");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

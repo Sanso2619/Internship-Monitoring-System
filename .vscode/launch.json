@@ -3,22 +3,14 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Main",
-            "request": "launch",
-            "mainClass": "Main",
-            "projectName": "Internship_monitoring_da18ec76"
-        },
-        {
-            "type": "java",
             "name": "Run Main",
             "request": "launch",
             "mainClass": "Main",
-            "projectName": "Internship_monitoring",
             "classPaths": [
-                "/Users/sanchitaarora/Downloads/Internship_Monitoring/Internship_monitoring/bin",
-                "/Users/sanchitaarora/Downloads/Internship_Monitoring/Internship_monitoring/lib/mysql-connector-j-9.6.0.jar"
+                "${workspaceFolder}/bin",
+                "${workspaceFolder}/lib/mysql-connector-j-9.6.0.jar"
             ],
-            "cwd": "/Users/sanchitaarora/Downloads/Internship_Monitoring/Internship_monitoring",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         }
     ]
