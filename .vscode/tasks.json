@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Main",
+            "type": "shell",
+            "command": "cd /Users/sanchitaarora/Downloads/Internship_Monitoring/Internship_monitoring && find src -name '*.java' | xargs javac -cp lib/mysql-connector-j-9.6.0.jar -d bin && java -cp bin:lib/mysql-connector-j-9.6.0.jar Main",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true,
+                "focus": true,
+                "echo": false
+            }
+        }
+    ]
+}

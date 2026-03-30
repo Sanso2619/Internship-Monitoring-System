@@ -1,8 +1,8 @@
 package ui;
 
 import dao.*;
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 public class Dashboard extends JFrame {
 
@@ -12,9 +12,11 @@ public class Dashboard extends JFrame {
     InternshipDAO internshipDAO = new InternshipDAO();
     ApplicationDAO applicationDAO = new ApplicationDAO();
 
-    int studentId = 1;
+    int studentId;
 
-    public Dashboard() {
+    // ✅ ONLY ONE CONSTRUCTOR
+    public Dashboard(int studentId) {
+        this.studentId = studentId;
 
         setTitle("Internship Monitoring System");
         setSize(800, 550);
@@ -31,8 +33,7 @@ public class Dashboard extends JFrame {
         add(title, BorderLayout.NORTH);
 
         // 🔥 SIDE PANEL
-        JPanel sidePanel = new JPanel();
-        sidePanel.setLayout(new GridLayout(6, 1, 10, 10));
+        JPanel sidePanel = new JPanel(new GridLayout(6, 1, 10, 10));
         sidePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         sidePanel.setBackground(new Color(240, 240, 240));
 
@@ -52,51 +53,43 @@ public class Dashboard extends JFrame {
 
         add(sidePanel, BorderLayout.WEST);
 
-        // 🔥 CENTER PANEL (MAIN CONTENT AREA)
+        // 🔥 CENTER PANEL
         centerPanel = new JPanel(new BorderLayout());
         add(centerPanel, BorderLayout.CENTER);
 
-        // ===============================
-        // 🔥 BUTTON ACTIONS
-        // ===============================
+        // 🔥 ACTIONS
 
-        // 👤 PROFILE
-        btnProfile.addActionListener(e -> {
-            showText(studentDAO.getStudentProfile(studentId));
-        });
+        btnProfile.addActionListener(e ->
+            showText(studentDAO.getStudentProfile(studentId))
+        );
 
-        // 🧠 SKILLS
-        btnSkills.addActionListener(e -> {
-            showText(studentDAO.getStudentSkillsString(studentId));
-        });
+        btnSkills.addActionListener(e ->
+            showText(studentDAO.getStudentSkillsString(studentId))
+        );
 
-        // 💼 INTERNSHIPS (TABLE)
         btnInternships.addActionListener(e -> {
             String[] columns = {"Title", "Company", "Stipend"};
             String[][] data = internshipDAO.getInternshipsTableData();
             showTable(columns, data);
         });
 
-        // 🔥 RECOMMENDATIONS
-        btnRecommend.addActionListener(e -> {
-            showText(applicationDAO.getRecommendationsString(studentId));
-        });
+        btnRecommend.addActionListener(e ->
+            showText(applicationDAO.getRecommendationsString(studentId))
+        );
 
-        // 🧾 APPLY
         btnApply.addActionListener(e -> {
             String input = JOptionPane.showInputDialog("Enter Internship ID:");
-
             if (input != null) {
                 int internshipId = Integer.parseInt(input);
                 showText(applicationDAO.applyInternshipString(studentId, internshipId));
             }
         });
 
-        // 📊 APPLICATIONS
-        btnApplications.addActionListener(e -> {
-            showText(applicationDAO.getApplicationsString());
-        });
+        btnApplications.addActionListener(e ->
+            showText(applicationDAO.getApplicationsString())
+        );
 
+        // ✅ VERY IMPORTANT
         setVisible(true);
     }
 
@@ -113,29 +106,25 @@ public class Dashboard extends JFrame {
         return btn;
     }
 
-    // 🔥 SHOW TEXT (FOR PROFILE, SKILLS, ETC.)
+    // 🔥 TEXT DISPLAY
     private void showText(String text) {
         centerPanel.removeAll();
 
         JTextArea area = new JTextArea(text);
         area.setFont(new Font("Consolas", Font.PLAIN, 14));
         area.setEditable(false);
-        area.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         centerPanel.add(new JScrollPane(area), BorderLayout.CENTER);
-
         centerPanel.revalidate();
         centerPanel.repaint();
     }
 
-    // 🔥 SHOW TABLE (FOR INTERNSHIPS)
+    // 🔥 TABLE DISPLAY
     private void showTable(String[] columns, String[][] data) {
         centerPanel.removeAll();
 
         JTable table = new JTable(data, columns);
-        JScrollPane scrollPane = new JScrollPane(table);
-
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        centerPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         centerPanel.revalidate();
         centerPanel.repaint();
