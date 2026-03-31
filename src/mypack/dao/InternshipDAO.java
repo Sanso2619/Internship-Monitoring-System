@@ -1,9 +1,8 @@
 
 package mypack.dao;
 
-import mypack.db.DBConnection;
 import java.sql.*;
-
+import mypack.db.DBConnection;
 import mypack.exception.ApplicationException;
 
 public class InternshipDAO {

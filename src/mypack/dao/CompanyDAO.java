@@ -1,15 +1,34 @@
-
 package mypack.dao;
 
-import mypack.db.DBConnection;
 import java.sql.*;
-
+import mypack.db.DBConnection;
 import mypack.exception.ApplicationException;
+import mypack.interfaces.Trackable;
+import mypack.model.*;
 
-public class CompanyDAO {
-        //  View company profile
+// ✅ Implements interface
+public class CompanyDAO implements Trackable {
+
+    // ✅ Runtime Polymorphism (override)
+    @Override
+    public void trackStatus() {
+        System.out.println("Tracking CompanyDAO operations...");
+    }
+
+    // ✅ Compile-time Polymorphism (method overloading)
+    public void log(String msg) {
+        System.out.println("[LOG]: " + msg);
+    }
+
+    public void log(int id) {
+        System.out.println("[LOG ID]: " + id);
+    }
+
+    // 🔥 VIEW COMPANY PROFILE
     public void getCompanyProfile(int companyId) {
         try {
+
+            trackStatus(); // interface usage
 
             if (companyId <= 0) {
                 throw new ApplicationException("Invalid Company ID!");
@@ -17,26 +36,35 @@ public class CompanyDAO {
 
             Connection conn = DBConnection.getConnection();
 
-            String query = "SELECT company_name, location, industry FROM companies WHERE company_id = ?";
+            String query =
+                "SELECT company_name, location, industry " +
+                "FROM companies WHERE company_id = ?";
+
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setInt(1, companyId);
 
             ResultSet rs = ps.executeQuery();
 
-            boolean found = false;
+            if (!rs.next()) {
+                throw new ApplicationException("No company found!");
+            }
 
-            while (rs.next()) {
-                found = true;
+            do {
+                String name = rs.getString("company_name");
+
+                // ✅ Using hierarchy (User → Company)
+                User u = new Company(companyId, name);
+                u.displayRole(); // runtime polymorphism
+
                 System.out.println(
-                        rs.getString("company_name") + " | " +
+                        name + " | " +
                         rs.getString("location") + " | " +
                         rs.getString("industry")
                 );
-            }
 
-            if (!found) {
-                throw new ApplicationException("No company found!");
-            }
+            } while (rs.next());
+
+            log("Company profile fetched");
 
         } catch (ApplicationException e) {
             System.out.println("Custom Error: " + e.getMessage());
@@ -44,11 +72,17 @@ public class CompanyDAO {
             System.out.println("Database Error!");
         }
     }
-    
 
-    //  View applicants for company internships
+    // 🔥 VIEW APPLICANTS
     public void viewApplicants(int companyId) {
         try {
+
+            trackStatus();
+
+            if (companyId <= 0) {
+                throw new ApplicationException("Invalid Company ID!");
+            }
+
             Connection conn = DBConnection.getConnection();
 
             String query =
@@ -64,18 +98,33 @@ public class CompanyDAO {
 
             ResultSet rs = ps.executeQuery();
 
-            System.out.println("\nApplicants:");
-
-            while (rs.next()) {
-                System.out.println(
-                    rs.getString("name") + " | " +
-                    rs.getString("title") + " | " +
-                    rs.getString("status")
-                );
+            if (!rs.next()) {
+                throw new ApplicationException("No applicants found!");
             }
 
+            System.out.println("\nApplicants:");
+
+            do {
+                String studentName = rs.getString("name");
+
+                // ✅ Using hierarchy (User → Student)
+                User u = new Student(1, studentName, "email@test.com", 0.0);
+                u.displayRole(); // polymorphism
+
+                System.out.println(
+                        studentName + " | " +
+                        rs.getString("title") + " | " +
+                        rs.getString("status")
+                );
+
+            } while (rs.next());
+
+            log(companyId); // method overloading
+
+        } catch (ApplicationException e) {
+            System.out.println("Custom Error: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Database Error!");
         }
     }
 }

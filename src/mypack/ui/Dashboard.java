@@ -95,7 +95,7 @@ public class Dashboard extends JFrame {
         });
 
         btnApplications.addActionListener(e ->
-            showText(applicationDAO.getApplicationsString())
+            showText(applicationDAO.getApplicationsString(studentId))
         );
 
         setVisible(true);

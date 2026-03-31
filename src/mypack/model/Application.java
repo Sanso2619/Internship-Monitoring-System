@@ -1,19 +1,16 @@
-
 package mypack.model;
 
-import mypack.interfaces.Trackable;
+public class Application extends User {
 
-public class Application implements Trackable {
+    protected String status;
 
-    private int id;
-    private String status;
-
-    public Application(int id, String status) {
-        this.id = id;
+    public Application(int id, String name, String status) {
+        super(id, name);
         this.status = status;
     }
 
-    public void trackStatus() {
-        System.out.println("Status: " + status);
+    @Override
+    public void displayRole() {
+        System.out.println("I am an Application");
     }
 }
