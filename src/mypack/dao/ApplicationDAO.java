@@ -138,7 +138,8 @@ public class ApplicationDAO implements Trackable {
                 "JOIN internship_skills ik ON i.internship_id = ik.internship_id " +
                 "JOIN student_skills ss ON ik.skill_id = ss.skill_id " +
                 "WHERE ss.student_id = ? " +
-                "GROUP BY i.internship_id";
+                "GROUP BY i.internship_id, i.title " +
+                "ORDER BY match_score DESC";
 
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setInt(1, studentId);
@@ -161,6 +162,7 @@ public class ApplicationDAO implements Trackable {
         } catch (ApplicationException e) {
             return "Custom Error: " + e.getMessage();
         } catch (Exception e) {
+            e.printStackTrace(); 
             return "Database Error!";
         }
 
@@ -183,11 +185,12 @@ public class ApplicationDAO implements Trackable {
                 "FROM applications a " +
                 "JOIN students s ON a.student_id = s.student_id " +
                 "JOIN users u ON s.student_id = u.user_id " +
-                "JOIN internships i ON a.internship_id = i.internship_id" +
+                "JOIN internships i ON a.internship_id = i.internship_id " +
                 "WHERE s.student_id = ?";
 
 
             PreparedStatement ps = conn.prepareStatement(query);
+            ps.setInt(1, studentId);
             ResultSet rs = ps.executeQuery();
 
             if (!rs.next()) {
@@ -208,6 +211,7 @@ public class ApplicationDAO implements Trackable {
         } catch (ApplicationException e) {
             return "Custom Error: " + e.getMessage();
         } catch (Exception e) {
+            e.printStackTrace();
             return "Database Error!";
         }
 
