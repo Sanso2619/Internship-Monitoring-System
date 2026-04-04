@@ -36,7 +36,7 @@ public class Dashboard extends JFrame {
         add(title, BorderLayout.NORTH);
 
         // 🔵 SIDE PANEL
-        JPanel sidePanel = new JPanel(new GridLayout(6, 1, 10, 10));
+        JPanel sidePanel = new JPanel(new GridLayout(8, 1, 10, 10));
         sidePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         sidePanel.setBackground(new Color(240, 240, 240));
 
@@ -46,6 +46,8 @@ public class Dashboard extends JFrame {
         JButton btnRecommend = createButton("Recommendations");
         JButton btnApply = createButton("Apply Selected");
         JButton btnApplications = createButton("Applications");
+        JButton btnEditProfile = createButton("Edit Profile");
+        JButton btnSkillsAdd = createButton("Add Skills");
 
         sidePanel.add(btnProfile);
         sidePanel.add(btnSkills);
@@ -53,6 +55,9 @@ public class Dashboard extends JFrame {
         sidePanel.add(btnRecommend);
         sidePanel.add(btnApply);
         sidePanel.add(btnApplications);
+        sidePanel.add(btnProfile);
+        sidePanel.add(btnEditProfile);
+        sidePanel.add(btnSkillsAdd);
 
         add(sidePanel, BorderLayout.WEST);
 
@@ -62,14 +67,14 @@ public class Dashboard extends JFrame {
 
         // ================= ACTIONS =================
 
-        btnProfile.addActionListener(e ->
-            showText(studentDAO.getStudentProfile(studentId))
-        );
+        btnProfile.addActionListener(e -> {
+    new StudentProfile(studentId); // ✅ opens edit form
+});
 
         btnSkills.addActionListener(e ->
             showText(studentDAO.getStudentSkillsString(studentId))
         );
-
+    btnSkillsAdd.addActionListener(e -> new AddSkills(studentId));
         // 🔥 SHOW INTERNSHIP TABLE
         btnInternships.addActionListener(e -> {
             String[] columns = {"ID", "Title", "Company", "Stipend"};
@@ -89,7 +94,9 @@ public class Dashboard extends JFrame {
         btnRecommend.addActionListener(e ->
             showText(applicationDAO.getRecommendationsString(studentId))
         );
-
+        btnEditProfile.addActionListener(e -> {
+    new StudentProfile(studentId);
+});
         // 🔥 APPLY USING SELECTED ROW
         btnApply.addActionListener(e -> {
 
