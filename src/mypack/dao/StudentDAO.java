@@ -3,6 +3,7 @@ package mypack.dao;
 import java.sql.*;
 import mypack.db.DBConnection;
 import mypack.exception.ApplicationException;
+import mypack.exception.DataNotFoundException;
 import mypack.interfaces.Trackable;
 import mypack.model.*;
 
@@ -49,9 +50,10 @@ public class StudentDAO implements Trackable {
 
             ResultSet rs = ps.executeQuery();
 
-            if (!rs.next()) {
-                throw new ApplicationException("Student not found!");
-            }
+                if (!rs.next()) {
+                    throw new DataNotFoundException("Student not found!");
+                }
+            
 
             String name = rs.getString("name");
 

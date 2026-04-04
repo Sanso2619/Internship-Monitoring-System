@@ -3,6 +3,7 @@ package mypack.dao;
 import java.sql.*;
 import mypack.db.DBConnection;
 import mypack.exception.ApplicationException;
+import mypack.exception.DuplicateUserException;
 import mypack.interfaces.Trackable;
 import mypack.model.*; // using hierarchy classes
 
@@ -82,40 +83,69 @@ public class ApplicationDAO implements Trackable {
     }
 
     // 2. APPLY INTERNSHIP
+
     public String applyInternshipString(int studentId, int internshipId) {
-        try {
 
-            trackStatus();
+    try {
 
-            if (studentId <= 0 || internshipId <= 0) {
-                throw new ApplicationException("Invalid input values!");
-            }
+        trackStatus();
 
-            Connection conn = DBConnection.getConnection();
-
-            String query = "{CALL apply_internship(?, ?)}";
-            CallableStatement cs = conn.prepareCall(query);
-
-            cs.setInt(1, studentId);
-            cs.setInt(2, internshipId);
-
-            boolean hasResult = cs.execute();
-
-            log(studentId); // polymorphism
-
-            if (hasResult) {
-                ResultSet rs = cs.getResultSet();
-                if (rs.next()) return rs.getString(1);
-            }
-
-            return "Applied successfully!";
-
-        } catch (ApplicationException e) {
-            return "Custom Error: " + e.getMessage();
-        } catch (Exception e) {
-            return "Database Error!";
+        if (studentId <= 0 || internshipId <= 0) {
+            throw new ApplicationException("Invalid input values!");
         }
+
+        Connection conn = DBConnection.getConnection();
+
+        // 🔥 1. ALREADY APPLIED CHECK
+        String checkQuery = "SELECT COUNT(*) FROM applications WHERE student_id=? AND internship_id=?";
+        PreparedStatement checkPs = conn.prepareStatement(checkQuery);
+        checkPs.setInt(1, studentId);
+        checkPs.setInt(2, internshipId);
+
+        ResultSet checkRs = checkPs.executeQuery();
+        checkRs.next();
+
+        if (checkRs.getInt(1) > 0) {
+            throw new ApplicationException("⚠️ You already applied to this internship!");
+        }
+        if (checkRs.getInt(1) > 0) {
+        throw new DuplicateUserException("Already applied!");
+        }
+
+        // 🔥 2. CGPA CHECK (using DB function)
+        String cgpaCheck = "SELECT check_eligibility(?, ?) AS eligible";
+        PreparedStatement cgpaPs = conn.prepareStatement(cgpaCheck);
+        cgpaPs.setInt(1, studentId);
+        cgpaPs.setInt(2, internshipId);
+
+        ResultSet cgpaRs = cgpaPs.executeQuery();
+        if (cgpaRs.next() && !cgpaRs.getBoolean("eligible")) {
+            throw new ApplicationException("❌ Not Eligible (Low CGPA)");
+        }
+
+        // 🔥 3. APPLY USING PROCEDURE
+        CallableStatement cs = conn.prepareCall("{CALL apply_internship(?, ?)}");
+        cs.setInt(1, studentId);
+        cs.setInt(2, internshipId);
+
+        boolean hasResult = cs.execute();
+
+        if (hasResult) {
+            ResultSet rs = cs.getResultSet();
+            if (rs.next()) {
+                return rs.getString("message");
+            }
+        }
+
+        return "✅ Application submitted successfully!";
+
+    } catch (ApplicationException e) {
+        return e.getMessage();
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "Database Error!";
     }
+}
 
     // 3. RECOMMENDATIONS
     public String getRecommendationsString(int studentId) {
@@ -217,4 +247,32 @@ public class ApplicationDAO implements Trackable {
 
         return sb.toString();
     }
+    public String getStudentStatus(int studentId) {
+
+    StringBuilder sb = new StringBuilder("Your Applications:\n\n");
+
+    try {
+
+        Connection conn = DBConnection.getConnection();
+
+        String query = "SELECT * FROM view_applications WHERE name IS NOT NULL";
+
+        PreparedStatement ps = conn.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            sb.append(rs.getString("name"))
+              .append(" | ")
+              .append(rs.getString("title"))
+              .append(" | ")
+              .append(rs.getString("status"))
+              .append("\n");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return sb.toString();
+}
 }

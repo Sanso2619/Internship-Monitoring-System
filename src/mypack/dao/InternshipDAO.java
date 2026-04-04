@@ -4,6 +4,7 @@ package mypack.dao;
 import java.sql.*;
 import mypack.db.DBConnection;
 import mypack.exception.ApplicationException;
+import mypack.exception.DataNotFoundException;
 
 public class InternshipDAO {
 
@@ -100,6 +101,49 @@ public class InternshipDAO {
             data[i][0] = rs.getString("title");
             data[i][1] = rs.getString("company_name");
             data[i][2] = "₹" + rs.getInt("stipend");
+            i++;
+        }
+
+        return data;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return new String[0][0];
+}
+    public String[][] getInternshipsTableDataWithId() {
+
+    try {
+        Connection conn = DBConnection.getConnection();
+
+        String query =
+            "SELECT i.internship_id, i.title, c.company_name, i.stipend " +
+            "FROM internships i JOIN companies c ON i.company_id = c.company_id";
+
+        PreparedStatement ps = conn.prepareStatement(
+            query,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
+
+        ResultSet rs = ps.executeQuery();
+        
+        rs.last();
+        int size = rs.getRow();
+        rs.beforeFirst();
+        
+        if (size == 0) {
+        throw new DataNotFoundException("No internships available!");
+    }
+        String[][] data = new String[size][4];
+
+        int i = 0;
+        while (rs.next()) {
+            data[i][0] = String.valueOf(rs.getInt("internship_id")); // 🔥 IMPORTANT
+            data[i][1] = rs.getString("title");
+            data[i][2] = rs.getString("company_name");
+            data[i][3] = "₹" + rs.getInt("stipend");
             i++;
         }
 

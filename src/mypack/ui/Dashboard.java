@@ -1,10 +1,9 @@
 package mypack.ui;
 
-import mypack.dao.*;
-import mypack.exception.ApplicationException;
-
 import java.awt.*;
 import javax.swing.*;
+import mypack.dao.*;
+import mypack.exception.ApplicationException;
 
 public class Dashboard extends JFrame {
 
@@ -16,7 +15,10 @@ public class Dashboard extends JFrame {
 
     int studentId;
 
+    JTable internshipTable; // 🔥 important
+
     public Dashboard(int studentId) {
+
         this.studentId = studentId;
 
         setTitle("Internship Monitoring System");
@@ -24,6 +26,7 @@ public class Dashboard extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
+        // 🔵 TITLE
         JLabel title = new JLabel("Internship Dashboard", JLabel.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setForeground(Color.WHITE);
@@ -32,6 +35,7 @@ public class Dashboard extends JFrame {
         title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(title, BorderLayout.NORTH);
 
+        // 🔵 SIDE PANEL
         JPanel sidePanel = new JPanel(new GridLayout(6, 1, 10, 10));
         sidePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         sidePanel.setBackground(new Color(240, 240, 240));
@@ -40,7 +44,7 @@ public class Dashboard extends JFrame {
         JButton btnSkills = createButton("Skills");
         JButton btnInternships = createButton("Internships");
         JButton btnRecommend = createButton("Recommendations");
-        JButton btnApply = createButton("Apply");
+        JButton btnApply = createButton("Apply Selected");
         JButton btnApplications = createButton("Applications");
 
         sidePanel.add(btnProfile);
@@ -52,10 +56,11 @@ public class Dashboard extends JFrame {
 
         add(sidePanel, BorderLayout.WEST);
 
+        // 🔵 CENTER PANEL
         centerPanel = new JPanel(new BorderLayout());
         add(centerPanel, BorderLayout.CENTER);
 
-        // ACTIONS
+        // ================= ACTIONS =================
 
         btnProfile.addActionListener(e ->
             showText(studentDAO.getStudentProfile(studentId))
@@ -65,42 +70,67 @@ public class Dashboard extends JFrame {
             showText(studentDAO.getStudentSkillsString(studentId))
         );
 
+        // 🔥 SHOW INTERNSHIP TABLE
         btnInternships.addActionListener(e -> {
-            String[] columns = {"Title", "Company", "Stipend"};
-            String[][] data = internshipDAO.getInternshipsTableData();
-            showTable(columns, data);
+            String[] columns = {"ID", "Title", "Company", "Stipend"};
+            String[][] data = internshipDAO.getInternshipsTableDataWithId();
+
+            centerPanel.removeAll();
+
+            internshipTable = new JTable(data, columns);
+            internshipTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            centerPanel.add(new JScrollPane(internshipTable), BorderLayout.CENTER);
+
+            centerPanel.revalidate();
+            centerPanel.repaint();
         });
 
         btnRecommend.addActionListener(e ->
             showText(applicationDAO.getRecommendationsString(studentId))
         );
 
+        // 🔥 APPLY USING SELECTED ROW
         btnApply.addActionListener(e -> {
-            try {
-                String input = JOptionPane.showInputDialog("Enter Internship ID:");
 
-                if (input == null || input.trim().isEmpty()) {
-                    throw new ApplicationException("Internship ID cannot be empty!");
-                }
+    try {
 
-                int internshipId = Integer.parseInt(input);
+        if (internshipTable == null || internshipTable.getSelectedRow() == -1) {
+            throw new ApplicationException("⚠️ Please select an internship first!");
+        }
 
-                showText(applicationDAO.applyInternshipString(studentId, internshipId));
+        int row = internshipTable.getSelectedRow();
 
-            } catch (ApplicationException ex) {
-                showText("Custom Error: " + ex.getMessage());
-            } catch (Exception ex) {
-                showText("Invalid Input!");
-            }
-        });
+        // ✅ FIXED: get ID from table
+        int internshipId = Integer.parseInt(
+            internshipTable.getValueAt(row, 0).toString()
+        );
+
+        String result = applicationDAO.applyInternshipString(studentId, internshipId);
+
+        JOptionPane.showMessageDialog(this, result);
+
+    } catch (ApplicationException ex) {
+        JOptionPane.showMessageDialog(this, ex.getMessage());
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(this, "Invalid Action!");
+    }
+
+       
+});
 
         btnApplications.addActionListener(e ->
             showText(applicationDAO.getApplicationsString(studentId))
         );
 
         setVisible(true);
+        setLocationRelativeTo(null);
+
+         JOptionPane.showMessageDialog(this,
+    "💡 Tip: Higher CGPA increases your chances!");
     }
 
+    // 🔵 BUTTON STYLE
     private JButton createButton(String text) {
         JButton btn = new JButton(text);
         btn.setFocusPainted(false);
@@ -113,6 +143,7 @@ public class Dashboard extends JFrame {
         return btn;
     }
 
+    // 🔵 TEXT VIEW
     private void showText(String text) {
         centerPanel.removeAll();
 
@@ -125,6 +156,7 @@ public class Dashboard extends JFrame {
         centerPanel.repaint();
     }
 
+    // 🔵 TABLE VIEW
     private void showTable(String[] columns, String[][] data) {
         centerPanel.removeAll();
 
