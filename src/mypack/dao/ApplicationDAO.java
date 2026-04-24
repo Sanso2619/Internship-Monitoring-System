@@ -22,16 +22,16 @@ class SpecialApplication extends Application {
     }
 }
 
-// ✅ Implements interface (OOP)
+//  Implements interface (OOP)
 public class ApplicationDAO implements Trackable {
 
-    // ✅ Polymorphism (method override)
+    // Polymorphism (method override)
     @Override
     public void trackStatus() {
         System.out.println("Tracking DAO operations...");
     }
 
-    // ✅ Polymorphism using method overloading
+    //  Polymorphism using method overloading
     public void log(String msg) {
         System.out.println("[LOG]: " + msg);
     }
@@ -61,7 +61,7 @@ public class ApplicationDAO implements Trackable {
                 int id = rs.getInt("student_id");
                 double cgpa = rs.getDouble("cgpa");
 
-                // ✅ Using inheritance hierarchy
+                //  Using inheritance hierarchy
                 User u = new Student(id, "Student", "email@test.com", cgpa);
                 u.displayRole(); // runtime polymorphism
                 User u2 = new Application(2, "AppUser", "Pending");

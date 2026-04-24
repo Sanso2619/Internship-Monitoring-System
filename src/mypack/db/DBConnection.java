@@ -19,7 +19,7 @@ public class DBConnection {
             return conn;
 
         } catch (Exception e) {
-            System.out.println("DB CONNECTION FAILED ❌");
+            System.out.println("DB CONNECTION FAILED ");
             e.printStackTrace();
             return null;
         }

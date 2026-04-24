@@ -12,13 +12,11 @@ import mypack.model.*;
 
 public class CompanyDAO implements Trackable {
 
-    // ✅ Runtime Polymorphism (override)
     @Override
     public void trackStatus() {
         System.out.println("Tracking CompanyDAO operations...");
     }
 
-    // ✅ Compile-time Polymorphism (method overloading)
     public void log(String msg) {
         System.out.println("[LOG]: " + msg);
     }
@@ -26,8 +24,6 @@ public class CompanyDAO implements Trackable {
     public void log(int id) {
         System.out.println("[LOG ID]: " + id);
     }
-
-    // ================= COMPANY PROFILE =================
 
     public void getCompanyProfile(int companyId) {
         try {
@@ -76,8 +72,6 @@ public class CompanyDAO implements Trackable {
             System.out.println("Database Error: " + e.getMessage());
         }
     }
-
-    // ================= VIEW APPLICANTS (console) =================
 
     public void viewApplicants(int companyId) {
         try {
@@ -133,8 +127,6 @@ public class CompanyDAO implements Trackable {
         }
     }
 
-    // ================= GET APPLICANTS FOR TABLE =================
-
     public String[][] getApplicantsTableData(int companyId) {
         try {
             Connection conn = DBConnection.getConnection();
@@ -152,7 +144,6 @@ public class CompanyDAO implements Trackable {
 
             ResultSet rs = ps.executeQuery();
 
-            // 🔥 List approach — no scrollable ResultSet needed
             List<String[]> list = new ArrayList<>();
 
             while (rs.next()) {
@@ -174,13 +165,10 @@ public class CompanyDAO implements Trackable {
         }
     }
 
-    // ================= GET INTERNSHIPS FOR TABLE =================
-
     public String[][] getInternshipsTableData(int companyId) {
         try {
             Connection conn = DBConnection.getConnection();
 
-            // 🔥 Match exact column names from your DB
             String query =
                 "SELECT internship_id, title, min_cgpa, stipend " +
                 "FROM internships WHERE company_id = ?";
@@ -190,7 +178,6 @@ public class CompanyDAO implements Trackable {
 
             ResultSet rs = ps.executeQuery();
 
-            // 🔥 List approach
             List<String[]> list = new ArrayList<>();
 
             while (rs.next()) {
@@ -211,8 +198,6 @@ public class CompanyDAO implements Trackable {
             return new String[0][0];
         }
     }
-
-    // ================= ADD INTERNSHIP =================
 
     public String addInternship(int companyId, String title, double cgpa, int stipend) {
         try {
@@ -252,8 +237,6 @@ public class CompanyDAO implements Trackable {
         }
     }
 
-    // ================= UPDATE APPLICATION STATUS =================
-
     public String updateApplicationStatus(int applicationId, String status) {
         try {
             
@@ -263,19 +246,56 @@ public class CompanyDAO implements Trackable {
 
             if (!(status.equals("shortlisted") || status.equals("rejected"))) {
                 throw new UnauthorizedActionException("Invalid status!");
-             }
+            }
 
             Connection conn = DBConnection.getConnection();
 
-            CallableStatement cs = conn.prepareCall("{CALL update_application_status(?, ?)}");
-            cs.setInt(1, applicationId);
-            cs.setString(2, status);
+            String query = "UPDATE applications SET status = ? WHERE application_id = ?";
+            PreparedStatement ps = conn.prepareStatement(query);
 
-            cs.execute();
+            ps.setString(1, status);
+            ps.setInt(2, applicationId);
 
+            int rows = ps.executeUpdate();
+
+            if (rows == 0) {
+                return "No application found!";
+            }
+
+            // ✅ FIXED: moved before return
             log("Status updated: appId=" + applicationId + " status=" + status);
 
-            return "Status updated to: " + status;
+            return "Status updated successfully!";
+
+        } catch (Exception e) {   // ✅ FIXED
+            e.printStackTrace();
+            return "Database Error: " + e.getMessage();
+        }
+    }
+
+    public String updateStatusByInternship(int internshipId, String status) {
+        try {
+            if (internshipId <= 0) {
+                throw new ApplicationException("Invalid Internship ID!");
+            }
+
+            Connection conn = DBConnection.getConnection();
+
+            String query = "UPDATE applications SET status = ? WHERE internship_id = ?";
+
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, status);
+            ps.setInt(2, internshipId);
+
+            int rows = ps.executeUpdate();
+
+            if (rows == 0) {
+                return "No applicants found for this internship!";
+            }
+
+            log("Updated " + rows + " applicants to: " + status);
+
+            return rows + " applicant(s) marked as " + status + "!";
 
         } catch (ApplicationException e) {
             return e.getMessage();
@@ -284,31 +304,75 @@ public class CompanyDAO implements Trackable {
             return "Database Error: " + e.getMessage();
         }
     }
-    // ================= UPDATE ALL APPLICANTS OF AN INTERNSHIP =================
 
-public String updateStatusByInternship(int internshipId, String status) {
+    public String autoShortlistByInternship(int internshipId) {
+        try {
+            Connection conn = DBConnection.getConnection();
+
+            String shortlistQuery =
+                "UPDATE applications a " +
+                "JOIN students s ON a.student_id = s.student_id " +
+                "JOIN internships i ON a.internship_id = i.internship_id " +
+                "SET a.status = 'shortlisted' " +
+                "WHERE a.internship_id = ? AND s.cgpa >= i.min_cgpa";
+
+            PreparedStatement ps1 = conn.prepareStatement(shortlistQuery);
+            ps1.setInt(1, internshipId);
+            int shortlisted = ps1.executeUpdate();
+
+            String rejectQuery =
+                "UPDATE applications a " +
+                "JOIN students s ON a.student_id = s.student_id " +
+                "JOIN internships i ON a.internship_id = i.internship_id " +
+                "SET a.status = 'rejected' " +
+                "WHERE a.internship_id = ? AND s.cgpa < i.min_cgpa";
+
+            PreparedStatement ps2 = conn.prepareStatement(rejectQuery);
+            ps2.setInt(1, internshipId);
+            int rejected = ps2.executeUpdate();
+
+            return shortlisted + " shortlisted, " + rejected + " rejected based on CGPA!";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error: " + e.getMessage();
+        }
+    }
+    public String deleteInternship(int internshipId) {
     try {
+
         if (internshipId <= 0) {
             throw new ApplicationException("Invalid Internship ID!");
         }
 
         Connection conn = DBConnection.getConnection();
 
-        String query = "UPDATE applications SET status = ? WHERE internship_id = ?";
+        // 🔴 If you DON'T have ON DELETE CASCADE, delete dependent records first
+        // (recommended if FK constraints block deletion)
+        String delSkills = "DELETE FROM internship_skills WHERE internship_id = ?";
+        PreparedStatement ps1 = conn.prepareStatement(delSkills);
+        ps1.setInt(1, internshipId);
+        ps1.executeUpdate();
 
+        String delApps = "DELETE FROM applications WHERE internship_id = ?";
+        PreparedStatement ps2 = conn.prepareStatement(delApps);
+        ps2.setInt(1, internshipId);
+        ps2.executeUpdate();
+
+        // 🔴 Finally delete internship
+        String query = "DELETE FROM internships WHERE internship_id = ?";
         PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, status);
-        ps.setInt(2, internshipId);
+        ps.setInt(1, internshipId);
 
         int rows = ps.executeUpdate();
 
         if (rows == 0) {
-            return "No applicants found for this internship!";
+            return "No internship found!";
         }
 
-        log("Updated " + rows + " applicants to: " + status);
+        log("Internship deleted: " + internshipId);
 
-        return rows + " applicant(s) marked as " + status + "!";
+        return "Internship deleted successfully!";
 
     } catch (ApplicationException e) {
         return e.getMessage();
@@ -317,39 +381,5 @@ public String updateStatusByInternship(int internshipId, String status) {
         return "Database Error: " + e.getMessage();
     }
 }
-    public String autoShortlistByInternship(int internshipId) {
-    try {
-        Connection conn = DBConnection.getConnection();
-
-        // ✅ Shortlist students who meet min CGPA
-        String shortlistQuery =
-            "UPDATE applications a " +
-            "JOIN students s ON a.student_id = s.student_id " +
-            "JOIN internships i ON a.internship_id = i.internship_id " +
-            "SET a.status = 'shortlisted' " +
-            "WHERE a.internship_id = ? AND s.cgpa >= i.min_cgpa AND a.status = 'pending'";
-
-        PreparedStatement ps1 = conn.prepareStatement(shortlistQuery);
-        ps1.setInt(1, internshipId);
-        int shortlisted = ps1.executeUpdate();
-
-        // ✅ Reject students who don't meet min CGPA
-        String rejectQuery =
-            "UPDATE applications a " +
-            "JOIN students s ON a.student_id = s.student_id " +
-            "JOIN internships i ON a.internship_id = i.internship_id " +
-            "SET a.status = 'rejected' " +
-            "WHERE a.internship_id = ? AND s.cgpa < i.min_cgpa AND a.status = 'pending'";
-
-        PreparedStatement ps2 = conn.prepareStatement(rejectQuery);
-        ps2.setInt(1, internshipId);
-        int rejected = ps2.executeUpdate();
-
-        return shortlisted + " shortlisted, " + rejected + " rejected based on CGPA!";
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        return "Error: " + e.getMessage();
-    }
 }
-}
+    

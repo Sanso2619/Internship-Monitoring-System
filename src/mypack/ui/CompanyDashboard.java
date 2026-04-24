@@ -1,7 +1,7 @@
 package mypack.ui;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 import mypack.dao.CompanyDAO;
 
 public class CompanyDashboard extends JFrame {
@@ -61,8 +61,10 @@ public class CompanyDashboard extends JFrame {
         JButton btnShortlist    = new JButton("Shortlist");
         JButton btnReject       = new JButton("Reject");
         JButton btnRefresh      = new JButton("Refresh");
+        JButton btnDelete       = new JButton("Remove Internship");
 
         bottom.add(btnAdd);
+        bottom.add(btnDelete);
         bottom.add(btnAutoEvaluate);
         bottom.add(btnShortlist);
         bottom.add(btnReject);
@@ -84,6 +86,8 @@ public class CompanyDashboard extends JFrame {
         // 🔥 AUTO EVALUATE — only works from My Internships tab
         btnAutoEvaluate.addActionListener(e -> autoEvaluate());
 
+        btnDelete.addActionListener(e -> deleteInternship());
+        
         // 🔥 SHORTLIST — manual, works from Applicants tab
         btnShortlist.addActionListener(e -> handleStatusUpdate("shortlisted"));
 
@@ -240,6 +244,7 @@ public class CompanyDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, result);
 
             loadApplicants();
+            tabs.setSelectedIndex(1);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -266,6 +271,54 @@ public class CompanyDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "Error loading internships: " + e.getMessage());
         }
     }
+    private void deleteInternship() {
+    try {
+
+        // 🔴 Must be on internships tab
+        if (tabs.getSelectedIndex() != 0) {
+            JOptionPane.showMessageDialog(this,
+                "Go to 'My Internships' tab to remove internship!");
+            return;
+        }
+
+        if (internshipsTable == null) {
+            JOptionPane.showMessageDialog(this, "No internships loaded!");
+            return;
+        }
+
+        int row = internshipsTable.getSelectedRow();
+
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Select an internship first!");
+            return;
+        }
+
+        int internshipId = Integer.parseInt(
+            internshipsTable.getValueAt(row, 0).toString()
+        );
+
+        String title = internshipsTable.getValueAt(row, 1).toString();
+
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to delete '" + title + "'?",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        String result = dao.deleteInternship(internshipId);
+
+        JOptionPane.showMessageDialog(this, result);
+
+        loadInternships(); // 🔄 refresh
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }
+}
 
     // ================= LOAD APPLICANTS =================
 

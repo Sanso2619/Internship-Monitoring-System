@@ -1,4 +1,3 @@
-
 package mypack.dao;
 
 import java.sql.*;
@@ -72,87 +71,86 @@ public class InternshipDAO {
             e.printStackTrace();
         }
     }
+
+    //  Table data (without ID)
     public String[][] getInternshipsTableData() {
 
-    try {
-        Connection conn = DBConnection.getConnection();
+        try {
+            Connection conn = DBConnection.getConnection();
 
-        String query =
-            "SELECT i.title, c.company_name, i.stipend " +
-            "FROM internships i JOIN companies c ON i.company_id = c.company_id";
+            String query =
+                "SELECT i.title, c.company_name, i.stipend " +
+                "FROM internships i JOIN companies c ON i.company_id = c.company_id";
 
-        PreparedStatement ps = conn.prepareStatement(
-            query,
-            ResultSet.TYPE_SCROLL_INSENSITIVE,
-            ResultSet.CONCUR_READ_ONLY
-        );
+            PreparedStatement ps = conn.prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
 
-        ResultSet rs = ps.executeQuery();
+            java.util.ArrayList<String[]> list = new java.util.ArrayList<>();
 
-    
-        rs.last();
-        int size = rs.getRow();
-        rs.beforeFirst();
+            while (rs.next()) {
+                String[] row = new String[3];
+                row[0] = rs.getString("title");
+                row[1] = rs.getString("company_name");
+                row[2] = "₹" + rs.getInt("stipend");
 
-        String[][] data = new String[size][3];
+                list.add(row);
+            }
 
-        int i = 0;
-        while (rs.next()) {
-            data[i][0] = rs.getString("title");
-            data[i][1] = rs.getString("company_name");
-            data[i][2] = "₹" + rs.getInt("stipend");
-            i++;
+            String[][] data = new String[list.size()][3];
+            for (int i = 0; i < list.size(); i++) {
+                data[i] = list.get(i);
+            }
+
+            return data;
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return data;
-
-    } catch (Exception e) {
-        e.printStackTrace();
+        return new String[0][0];
     }
 
-    return new String[0][0];
-}
+    //  Table data (with ID)
     public String[][] getInternshipsTableDataWithId() {
 
-    try {
-        Connection conn = DBConnection.getConnection();
+        try {
+            Connection conn = DBConnection.getConnection();
 
-        String query =
-            "SELECT i.internship_id, i.title, c.company_name, i.stipend " +
-            "FROM internships i JOIN companies c ON i.company_id = c.company_id";
+            String query =
+                "SELECT i.internship_id, i.title, c.company_name, i.stipend " +
+                "FROM internships i LEFT JOIN companies c ON i.company_id = c.company_id";
 
-        PreparedStatement ps = conn.prepareStatement(
-            query,
-            ResultSet.TYPE_SCROLL_INSENSITIVE,
-            ResultSet.CONCUR_READ_ONLY
-        );
+            PreparedStatement ps = conn.prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
 
-        ResultSet rs = ps.executeQuery();
-        
-        rs.last();
-        int size = rs.getRow();
-        rs.beforeFirst();
-        
-        if (size == 0) {
-        throw new DataNotFoundException("No internships available!");
-    }
-        String[][] data = new String[size][4];
+            java.util.ArrayList<String[]> list = new java.util.ArrayList<>();
 
-        int i = 0;
-        while (rs.next()) {
-            data[i][0] = String.valueOf(rs.getInt("internship_id")); // 🔥 IMPORTANT
-            data[i][1] = rs.getString("title");
-            data[i][2] = rs.getString("company_name");
-            data[i][3] = "₹" + rs.getInt("stipend");
-            i++;
+            while (rs.next()) {
+
+                String[] row = new String[4];
+                row[0] = String.valueOf(rs.getInt("internship_id"));
+                row[1] = rs.getString("title");
+                row[2] = rs.getString("company_name");
+                row[3] = "₹" + rs.getInt("stipend");
+
+                list.add(row);
+            }
+
+            if (list.size() == 0) {
+                throw new DataNotFoundException("No internships available!");
+            }
+
+            String[][] data = new String[list.size()][4];
+            for (int i = 0; i < list.size(); i++) {
+                data[i] = list.get(i);
+            }
+
+            return data;
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return data;
-
-    } catch (Exception e) {
-        e.printStackTrace();
+        return new String[0][0];
     }
-
-    return new String[0][0];
-}
 }

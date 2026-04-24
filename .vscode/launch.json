@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "TestDB",
+            "request": "launch",
+            "mainClass": "mypack.db.TestDB",
+            "projectName": "Internship_monitoring_da18ec76"
+        },
+        {
+            "type": "java",
             "name": "Main",
             "request": "launch",
             "mainClass": "mypack.Main",

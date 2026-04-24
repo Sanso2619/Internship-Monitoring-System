@@ -108,8 +108,7 @@ public class AdminDAO {
                 "SELECT c.company_name " +
                 "FROM companies c " +
                 "LEFT JOIN internships i ON c.company_id = i.company_id " +
-                "LEFT JOIN applications a ON i.internship_id = a.internship_id " +
-                "WHERE a.application_id IS NULL";
+                "WHERE i.internship_id IS NULL";
 
             PreparedStatement ps = conn.prepareStatement(query);
             ResultSet rs = ps.executeQuery();
